@@ -4,7 +4,7 @@ const archiver = require("archiver");
 const osTmpdir = require("os-tmpdir");
 const { getCurrentCommitInfo } = require("./git.js");
 
-const bundleTempPath = `${osTmpdir()}/${Date.now()}-cypress-run.zip`;
+const bundleTempPath = `${osTmpdir()}/${Date.now()}-cypress-run.tar`;
 
 const bundleCypressRun = cypressPath => {
   // determine all important paths
@@ -12,7 +12,7 @@ const bundleCypressRun = cypressPath => {
   const screenshotPath = `${cypressPath}/screenshots/`;
 
   // this outlines the shape of the run.json object
-  // that is going to be supplied in the zip later on
+  // that is going to be supplied in the tar later on
   const runInfo = {
     gitCommit: {
       branchName: "",
@@ -27,8 +27,11 @@ const bundleCypressRun = cypressPath => {
   };
 
   // fill info object with screenshots
-  fs.readdirSync(screenshotPath).forEach(file => {
-    runInfo.screenshots.push(file);
+  fs.readdirSync(screenshotPath).forEach((file, index) => {
+    runInfo.screenshots.push({
+      name: `${index}.png`,
+      originalName: file
+    });
   });
 
   // add video to info object
@@ -41,24 +44,25 @@ const bundleCypressRun = cypressPath => {
 
   // create a file to stream archive data to.
   const output = fs.createWriteStream(bundleTempPath);
-  const archive = archiver("zip", {
-    zlib: { level: 9 } // Sets the compression level.
-  });
+  const archive = archiver("tar");
 
   // connect archive to output stream
   archive.pipe(output);
 
-  // add run info as json to our zip
+  // add run info as json to our tar
   archive.append(JSON.stringify(runInfo, null, 2), { name: "run.json" });
 
-  // add screenshots to zip
-  runInfo.screenshots.forEach(screenshot =>
-    archive.append(fs.createReadStream(`${screenshotPath}${screenshot}`), {
-      name: `screenshots/${screenshot}`
-    })
-  );
+  // add screenshots to tar
+  runInfo.screenshots.forEach(file => {
+    archive.append(
+      fs.createReadStream(`${screenshotPath}${file.originalName}`),
+      {
+        name: `screenshots/${file.name}`
+      }
+    );
+  });
 
-  // add video to zip
+  // add video to tar
   archive.append(fs.createReadStream(`${videoPath}${runInfo.video}`), {
     name: runInfo.video
   });
