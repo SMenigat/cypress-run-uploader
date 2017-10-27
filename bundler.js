@@ -67,21 +67,27 @@ const bundleCypressRun = cypressPath => {
     name: runInfo.video
   });
 
-  // build archive
-  return archive.finalize();
+  return new Promise(resolve => {
+    output.on("close", function() {
+      resolve(fs.statSync(bundleTempPath));
+    });
+
+    // build archive
+    archive.finalize();
+  });
 };
 
 const removeLocalBundle = () => {
   fs.unlinkSync(bundleTempPath);
 };
 
-const getFileSize = () => {
-  return filesize(fs.statSync(bundleTempPath).size).human();
+const formatFileSize = size => {
+  return filesize(size).human();
 };
 
 module.exports = {
   bundleTempPath,
   bundleCypressRun,
   removeLocalBundle,
-  getFileSize
+  formatFileSize
 };
