@@ -5,7 +5,7 @@ Bundles Cypress test run information and uploads it somewhere 📦⬆️
 
 This will bundle (tar) the `cypress` directory and upload the bundle to `http://my-dashboard/upload`. 
 
-````
+````Bash
 node index.js cypress/ http://my-dashboard/upload
 ````
 
@@ -16,7 +16,7 @@ The bundle will be transfered as form item `cypress-run`
 
 The tar-bundle contains a `run.json` file, with some additional run information. Have a look at the sample below.
 
-````
+````JSON
 {
   "gitCommit": {
     "branchName": "master",
